@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.media.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="454.0" prefWidth="749.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.codegym.mediaplayer.Videoplayer">
+   <center>
+      <StackPane prefHeight="453.0" prefWidth="739.0" BorderPane.alignment="CENTER">
+         <children>
+            <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="200.0">
+               <viewport>
+                  <Rectangle2D />
+               </viewport>
+            </MediaView>
+            <VBox alignment="BOTTOM_CENTER" prefHeight="454.0" prefWidth="749.0">
+               <children>
+                  <Slider fx:id="sliderTime">
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </Slider>
+                  <HBox alignment="BOTTOM_LEFT" prefHeight="55.0" prefWidth="749.0">
+                     <children>
+                        <HBox prefHeight="50.0" prefWidth="596.0">
+                           <children>
+                              <Button mnemonicParsing="false" onAction="#chooseFileMethod" text="Choose File">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#play" text="Play">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#pause" text="Pause">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#Stop" text="Reset">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button fx:id="idslow" mnemonicParsing="false" onAction="#slowRate" text="&lt;2&lt;">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button fx:id="isfast" mnemonicParsing="false" onAction="#fastFoward" text="&gt;2&gt;">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#back15" text="-15s">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#skip15" text="+15s">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Label fx:id="labelCurrentTime" text="Label">
+                                 <HBox.margin>
+                                    <Insets left="10.0" top="7.0" />
+                                 </HBox.margin>
+                              </Label>
+                              <Label fx:id="labelTotalTime" text="Label">
+                                 <HBox.margin>
+                                    <Insets left="10.0" top="7.0" />
+                                 </HBox.margin>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="hboxVolume" alignment="TOP_RIGHT" prefHeight="50.0" prefWidth="177.0">
+                           <children>
+                              <Label fx:id="labelVolume">
+                                 <HBox.margin>
+                                    <Insets right="10.0" top="7.0" />
+                                 </HBox.margin>
+                              </Label>
+                              <Slider fx:id="sliderVolume">
+                                 <HBox.margin>
+                                    <Insets right="10.0" top="7.0" />
+                                 </HBox.margin>
+                              </Slider>
+                           </children>
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </HBox>
+                     </children>
+                  </HBox>
+               </children>
+               <StackPane.margin>
+                  <Insets top="7.0" />
+               </StackPane.margin>
+            </VBox>
+         </children>
+      </StackPane>
+   </center>
+</BorderPane>
