@@ -11,29 +11,20 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="454.0" prefWidth="749.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.codegym.mediaplayer.Videoplayer">
    <center>
-      <StackPane prefHeight="453.0" prefWidth="739.0" BorderPane.alignment="CENTER">
+      <StackPane fx:id="stackPane" style="-fx-background-color: black;" BorderPane.alignment="CENTER">
          <children>
-            <MediaView fx:id="mediaView" fitHeight="200.0" fitWidth="200.0">
+            <MediaView fx:id="mediaView">
                <viewport>
                   <Rectangle2D />
                </viewport>
             </MediaView>
-            <VBox alignment="BOTTOM_CENTER" prefHeight="454.0" prefWidth="749.0">
+            <VBox alignment="BOTTOM_CENTER" prefHeight="511.0" prefWidth="749.0">
                <children>
-                  <Slider fx:id="sliderTime">
-                     <VBox.margin>
-                        <Insets bottom="10.0" />
-                     </VBox.margin>
-                  </Slider>
-                  <HBox alignment="BOTTOM_LEFT" prefHeight="55.0" prefWidth="749.0">
+                  <Slider fx:id="sliderTime" style="-fx-background-color: white;" />
+                  <HBox fx:id="hBoxControls" alignment="BOTTOM_LEFT" style="-fx-background-color: white;">
                      <children>
-                        <HBox prefHeight="50.0" prefWidth="596.0">
+                        <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="596.0">
                            <children>
-                              <Button mnemonicParsing="false" onAction="#chooseFileMethod" text="Choose File">
-                                 <HBox.margin>
-                                    <Insets left="7.0" />
-                                 </HBox.margin>
-                              </Button>
                               <Button mnemonicParsing="false" onAction="#play" text="Play">
                                  <HBox.margin>
                                     <Insets left="7.0" />
@@ -69,19 +60,34 @@
                                     <Insets left="7.0" />
                                  </HBox.margin>
                               </Button>
-                              <Label fx:id="labelCurrentTime" text="Label">
+                              <Button mnemonicParsing="false" onAction="#showList" text="List">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#previous" style="-fx-border-radius: 100%;" text="&lt;">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Button mnemonicParsing="false" onAction="#next" text="&gt;">
+                                 <HBox.margin>
+                                    <Insets left="7.0" />
+                                 </HBox.margin>
+                              </Button>
+                              <Label fx:id="labelCurrentTime">
                                  <HBox.margin>
                                     <Insets left="10.0" top="7.0" />
                                  </HBox.margin>
                               </Label>
-                              <Label fx:id="labelTotalTime" text="Label">
+                              <Label fx:id="labelTotalTime">
                                  <HBox.margin>
-                                    <Insets left="10.0" top="7.0" />
+                                    <Insets left="5.0" top="7.0" />
                                  </HBox.margin>
                               </Label>
                            </children>
                         </HBox>
-                        <HBox fx:id="hboxVolume" alignment="TOP_RIGHT" prefHeight="50.0" prefWidth="177.0">
+                        <HBox fx:id="hboxVolume" alignment="CENTER_RIGHT">
                            <children>
                               <Label fx:id="labelVolume">
                                  <HBox.margin>
@@ -108,4 +114,25 @@
          </children>
       </StackPane>
    </center>
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" onAction="#chooseMultiFileMethod" text="Open File" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </top>
 </BorderPane>

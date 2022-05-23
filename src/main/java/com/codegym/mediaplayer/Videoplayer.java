@@ -9,7 +9,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -22,6 +24,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -35,6 +38,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,10 +49,10 @@ import java.util.concurrent.Callable;
 public class Videoplayer implements Initializable {
 
     private MediaPlayer mediaPlayer;
-    private String path;
-
     @FXML
     private MediaView mediaView;
+    private Media mediaVideo;
+    private String path;
 
     @FXML
     private Slider sliderTime;
@@ -66,6 +71,10 @@ public class Videoplayer implements Initializable {
 
     @FXML
     private HBox hboxVolume;
+    @FXML
+    private HBox hBoxControls;
+    @FXML
+    private StackPane stackPane;
 
 
     @FXML
@@ -73,84 +82,232 @@ public class Videoplayer implements Initializable {
     @FXML
     private Label labelTotalTime;
 
+
     private boolean atEndOfVideo = false;
     private boolean isPlaying = true;
     private boolean isMuted = true;
 
     private ImageView ivVolume;
     private ImageView ivMute;
+    int count = 0;
 
+    List<Media> mediaList;
 
-    public void chooseFileMethod(ActionEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        File file = fileChooser.showOpenDialog(null);
-        path = file.toURI().toString();
+    public void starvideo(List<Media> mediaList) {
+        Media mediaStart = mediaList.get(count);
+        mediaPlayer = new MediaPlayer(mediaStart);
 
-        if (path != null) {
-            Media media = new Media(path);
-            mediaPlayer = new MediaPlayer(media);
+        mediaView.setMediaPlayer(mediaPlayer);
+        DoubleProperty widthProp = mediaView.fitWidthProperty();
+        DoubleProperty heightProp = mediaView.fitHeightProperty();
 
-            mediaView.setMediaPlayer(mediaPlayer);
+        widthProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
+        heightProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
 
-            DoubleProperty widthProp = mediaView.fitWidthProperty();
-            DoubleProperty heightProp = mediaView.fitHeightProperty();
+        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+                sliderTime.setValue(newValue.toSeconds());
+            }
+        });
 
-            widthProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
-            heightProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
+        sliderTime.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
 
-            mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
-                @Override
-                public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
-                    sliderTime.setValue(newValue.toSeconds());
-                }
-            });
+        sliderTime.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
 
-            sliderTime.setOnMousePressed(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent mouseEvent) {
-                    mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
-                }
-            });
-//            EventHandlerMouse eventHandlerMouse = new EventHandlerMouse(mediaPlayer, sliderTime);
-//
-//            EventHandler<MouseEvent> eventHandlerMouse1 = new EventHandler<MouseEvent>() {
-//                @Override
-//                public void handle(MouseEvent mouseEvent) {
-//
-//                }
-//            };
+        mediaPlayer.setOnReady(new Runnable() {
+            @Override
+            public void run() {
+                Duration total = mediaStart.getDuration();
+                sliderTime.setMax(total.toSeconds());
+            }
+        });
 
-
-//            sliderTime.setOnMousePressed(eventHandlerMouse);
-
-            sliderTime.setOnMouseDragged(new EventHandler<MouseEvent>() {
-                @Override
-                public void handle(MouseEvent mouseEvent) {
-                    mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
-                }
-            });
-
-            mediaPlayer.setOnReady(new Runnable() {
-                @Override
-                public void run() {
-                    Duration total = media.getDuration();
-                    sliderTime.setMax(total.toSeconds());
-                }
-            });
-
-            sliderVolume.setValue(mediaPlayer.getVolume()*100);
-            sliderVolume.valueProperty().addListener(new InvalidationListener() {
-                @Override
-                public void invalidated(Observable observable) {
-                    mediaPlayer.setVolume(sliderVolume.getValue() / 100);
-                }
-            });
-
-            mediaPlayer.play();
-
-        }
+        sliderVolume.setValue(mediaPlayer.getVolume() * 100);
+        sliderVolume.valueProperty().addListener(new InvalidationListener() {
+            @Override
+            public void invalidated(Observable observable) {
+                mediaPlayer.setVolume(sliderVolume.getValue() / 100);
+            }
+        });
+        mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
+                sliderTime.setMax(newDuration.toSeconds());
+                labelTotalTime.setText(getTime(newDuration));
+            }
+        });
+        mediaPlayer.play();
+        bindCurrentTimeLabel();
     }
 
+    public void chooseMultiFileMethod(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        List<File> files = fileChooser.showOpenMultipleDialog(null);
+        for (File file : files) {
+            Media media = new Media(file.toURI().toString());
+            mediaList.add(media);
+        }
+        starvideo(mediaList);
+    }
+
+    public void showList(ActionEvent event) {
+
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("ListMedia.fxml"));
+            Parent root = loader.load();
+
+            ((ListMedia) loader.getController()).setModel(mediaList);
+            Scene scene = new Scene(root);
+            Stage stage = new Stage();
+
+            stage.setTitle("Media List!");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void previous() {
+        mediaPlayer.stop();
+        int size = count;
+        for (int i = count; i < 0; i--) {
+            size = i - 1;
+        }
+        Media mediaStart = mediaList.get(size);
+        count = count - 1;
+        mediaPlayer = new MediaPlayer(mediaStart);
+        mediaView.setMediaPlayer(mediaPlayer);
+
+        DoubleProperty widthProp = mediaView.fitWidthProperty();
+        DoubleProperty heightProp = mediaView.fitHeightProperty();
+
+        widthProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
+        heightProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
+
+        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+                sliderTime.setValue(newValue.toSeconds());
+            }
+        });
+
+        sliderTime.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
+
+        sliderTime.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
+
+        mediaPlayer.setOnReady(new Runnable() {
+            @Override
+            public void run() {
+                Duration total = mediaStart.getDuration();
+                sliderTime.setMax(total.toSeconds());
+            }
+        });
+
+        sliderVolume.setValue(mediaPlayer.getVolume() * 100);
+        sliderVolume.valueProperty().addListener(new InvalidationListener() {
+            @Override
+            public void invalidated(Observable observable) {
+                mediaPlayer.setVolume(sliderVolume.getValue() / 100);
+            }
+        });
+        mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
+                sliderTime.setMax(newDuration.toSeconds());
+                labelTotalTime.setText(getTime(newDuration));
+            }
+        });
+        mediaPlayer.play();
+        bindCurrentTimeLabel();
+    }
+
+    public void next() {
+        mediaPlayer.stop();
+        int size = 0;
+        for (int i = 0; i <= count; i++) {
+            size = i + 1;
+        }
+        Media mediaStart = mediaList.get(size);
+        count = count + 1;
+        mediaPlayer = new MediaPlayer(mediaStart);
+
+        mediaView.setMediaPlayer(mediaPlayer);
+
+        DoubleProperty widthProp = mediaView.fitWidthProperty();
+        DoubleProperty heightProp = mediaView.fitHeightProperty();
+
+        widthProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
+        heightProp.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
+
+        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldValue, Duration newValue) {
+                sliderTime.setValue(newValue.toSeconds());
+            }
+        });
+
+        sliderTime.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
+
+        sliderTime.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mediaPlayer.seek(Duration.seconds(sliderTime.getValue()));
+            }
+        });
+
+        mediaPlayer.setOnReady(new Runnable() {
+            @Override
+            public void run() {
+                Duration total = mediaStart.getDuration();
+                sliderTime.setMax(total.toSeconds());
+            }
+        });
+
+        sliderVolume.setValue(mediaPlayer.getVolume() * 100);
+        sliderVolume.valueProperty().addListener(new InvalidationListener() {
+            @Override
+            public void invalidated(Observable observable) {
+                mediaPlayer.setVolume(sliderVolume.getValue() / 100);
+            }
+        });
+        mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
+            @Override
+            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
+                sliderTime.setMax(newDuration.toSeconds());
+                labelTotalTime.setText(getTime(newDuration));
+            }
+        });
+        mediaPlayer.play();
+        bindCurrentTimeLabel();
+    }
 
     public void play(ActionEvent event) {
         mediaPlayer.play();
@@ -203,9 +360,7 @@ public class Videoplayer implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
-        String path = "D:/module 2/mediaplayer/src/resource/Sia.mp4";
-
+        mediaList = new ArrayList<>();
         final int IV_SIZE = 25;
 
         Image imageVol = new Image(new File("src/resource/volume.png").toURI().toString());
@@ -219,9 +374,6 @@ public class Videoplayer implements Initializable {
         ivMute.setFitWidth(IV_SIZE);
 
         labelVolume.setGraphic(ivVolume);
-
-//        bindCurrentTimeLabel();
-
         sliderVolume.valueProperty().addListener(new InvalidationListener() {
             @Override
             public void invalidated(Observable observable) {
@@ -259,76 +411,40 @@ public class Videoplayer implements Initializable {
                 }
             }
         });
+        stackPane.sceneProperty().addListener(new ChangeListener<Scene>() {
+            @Override
+            public void changed(ObservableValue<? extends Scene> observableValue, Scene oldScene, Scene newScene) {
+                if (oldScene == null && newScene != null) {
+                    mediaView.fitHeightProperty().bind(newScene.heightProperty().subtract(hBoxControls.heightProperty().add(20)));
+                }
+            }
+        });
+    }
 
-//        mediaPlayer.setOnEndOfMedia(new Runnable() {
-//            @Override
-//            public void run() {
-//                atEndOfVideo = true;
-//                if (!labelCurrentTime.textProperty().equals(labelTotalTime.textProperty())) {
-//                    labelCurrentTime.textProperty().unbind();
-//                    labelCurrentTime.setText(getTime(mediaPlayer.getTotalDuration()) + " / ");
-//                }
-//            }
-//        });
-//
-//        mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
-//            @Override
-//            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
-//                sliderTime.setMax(newDuration.toSeconds());
-//                labelTotalTime.setText(getTime(newDuration));
-//            }
-//        });
-//
-//        mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
-//            @Override
-//            public void changed(ObservableValue<? extends Duration> observableValue, Duration oldTime, Duration newTime) {
-//                if (!sliderTime.isValueChanging()) {
-//                    sliderTime.setValue(newTime.toSeconds());
-//                }
-//                labelMatchEndVideo(labelCurrentTime.getText(), labelTotalTime.getText());
-//
-//            }
-//        });
-//
-//    }
-//    public void labelMatchEndVideo(String labelTime, String labelTotalTime) {
-//        for (int i = 0; i < labelTotalTime.length(); i++) {
-//            if (labelTime.charAt(i) != labelTotalTime.charAt(i)) {
-//                atEndOfVideo = false;
-//                break;
-//            } else {
-//                atEndOfVideo = true;
-//            }
-//
-//        }
-//    }
-//
-//    public void bindCurrentTimeLabel() {
-//        labelCurrentTime.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
-//            @Override
-//            public String call() throws Exception {
-//                return getTime(mediaPlayer.getCurrentTime()) + "/";
-//            }
-//        }, mediaPlayer.currentTimeProperty()));
-//    }
+    private void bindCurrentTimeLabel() {
+        labelCurrentTime.textProperty().bind(Bindings.createStringBinding(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return getTime(mediaPlayer.getCurrentTime()) + " /";
+            }
+        }, mediaPlayer.currentTimeProperty()));
+    }
 
-//    public String getTime(Duration time) {
-//        int hours = (int) time.toHours();
-//        int minutes = (int) time.toMinutes();
-//        int seconds = (int) time.toSeconds();
-//
-//        if (seconds > 59) seconds = seconds % 60;
-//        if (minutes > 59) minutes = minutes % 60;
-//        if (hours > 59) hours = hours % 60;
-//
-//        if (hours > 0) return String.format("%d:%02d:%02d",
-//                hours,
-//                minutes,
-//                seconds);
-//        else return String.format("%02d:%02d",
-//                minutes,
-//                seconds);
-//    }
+    public String getTime(Duration time) {
+        int hours = (int) time.toHours();
+        int minutes = (int) time.toMinutes();
+        int seconds = (int) time.toSeconds();
 
+        if (seconds > 59) seconds = seconds % 60;
+        if (minutes > 59) minutes = minutes % 60;
+        if (hours > 59) hours = hours % 60;
 
-}}
+        if (hours > 0) return String.format("%d:%02d:%02d",
+                hours,
+                minutes,
+                seconds);
+        else return String.format("%02d:%02d",
+                minutes,
+                seconds);
+    }
+}
