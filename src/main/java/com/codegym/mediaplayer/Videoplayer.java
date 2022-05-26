@@ -51,8 +51,6 @@ public class Videoplayer implements Initializable {
     private MediaPlayer mediaPlayer;
     @FXML
     private MediaView mediaView;
-    private Media mediaVideo;
-    private String path;
 
     @FXML
     private Slider sliderTime;
@@ -67,7 +65,16 @@ public class Videoplayer implements Initializable {
     private Button isfast;
 
     @FXML
-    private Label labelVolume;
+    private Button VolumeBtn;
+
+    @FXML
+    private Button previousbtn;
+
+    @FXML
+    private Button resetBtn;
+
+    @FXML
+    private Button nextbtn;
 
     @FXML
     private HBox hboxVolume;
@@ -89,6 +96,8 @@ public class Videoplayer implements Initializable {
 
     private ImageView ivVolume;
     private ImageView ivMute;
+    private ImageView ivNext;
+    private ImageView ivPrevious;
     int count = 0;
 
     List<Media> mediaList;
@@ -140,6 +149,8 @@ public class Videoplayer implements Initializable {
                 mediaPlayer.setVolume(sliderVolume.getValue() / 100);
             }
         });
+
+
         mediaPlayer.totalDurationProperty().addListener(new ChangeListener<Duration>() {
             @Override
             public void changed(ObservableValue<? extends Duration> observableValue, Duration oldDuration, Duration newDuration) {
@@ -147,12 +158,19 @@ public class Videoplayer implements Initializable {
                 labelTotalTime.setText(getTime(newDuration));
             }
         });
+
         mediaPlayer.play();
         bindCurrentTimeLabel();
+
+
+
     }
 
     public void chooseMultiFileMethod(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("mp4", "*.mp4"),
+                new FileChooser.ExtensionFilter("mp3", "*.mp3"));
         List<File> files = fileChooser.showOpenMultipleDialog(null);
         for (File file : files) {
             Media media = new Media(file.toURI().toString());
@@ -170,7 +188,7 @@ public class Videoplayer implements Initializable {
             ((ListMedia) loader.getController()).setModel(mediaList);
             Scene scene = new Scene(root);
             Stage stage = new Stage();
-
+            stage.getIcons().add(new Image("https://media-exp1.licdn.com/dms/image/C510BAQEdjKl11NB6-g/company-logo_200_200/0/1519959194921?e=2147483647&v=beta&t=aw701egxIiTMH5Bvt-yh_lpGyHkBPo5yrORm7DeQ840"));
             stage.setTitle("Media List!");
             stage.setScene(scene);
             stage.show();
@@ -318,7 +336,7 @@ public class Videoplayer implements Initializable {
         mediaPlayer.pause();
     }
 
-    public void Stop(ActionEvent event) {
+    public void Reset(ActionEvent event) {
         mediaPlayer.stop();
     }
 
@@ -361,7 +379,7 @@ public class Videoplayer implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         mediaList = new ArrayList<>();
-        final int IV_SIZE = 25;
+        final int IV_SIZE = 20;
 
         Image imageVol = new Image(new File("src/resource/volume.png").toURI().toString());
         ivVolume = new ImageView(imageVol);
@@ -373,36 +391,50 @@ public class Videoplayer implements Initializable {
         ivMute.setFitHeight(IV_SIZE);
         ivMute.setFitWidth(IV_SIZE);
 
-        labelVolume.setGraphic(ivVolume);
+        Image imageNext = new Image(new File("src/resource/next.png").toURI().toString());
+        ivNext = new ImageView(imageNext);
+        ivNext.setFitHeight(IV_SIZE);
+        ivNext.setFitWidth(IV_SIZE);
+
+        Image imagePrevious = new Image(new File("src/resource/previous.png").toURI().toString());
+        ivPrevious = new ImageView(imagePrevious);
+        ivPrevious.setFitHeight(IV_SIZE);
+        ivPrevious.setFitWidth(IV_SIZE);
+
+        previousbtn.setGraphic(ivPrevious);
+        nextbtn.setGraphic(ivNext);
+        VolumeBtn.setGraphic(ivVolume);
+
         sliderVolume.valueProperty().addListener(new InvalidationListener() {
             @Override
             public void invalidated(Observable observable) {
                 mediaPlayer.setVolume(sliderVolume.getValue());
                 if (mediaPlayer.getVolume() != 0.0) {
-                    labelVolume.setGraphic(ivVolume);
+                    VolumeBtn.setGraphic(ivVolume);
                     isMuted = false;
                 } else {
-                    labelVolume.setGraphic(ivMute);
+                    VolumeBtn.setGraphic(ivMute);
                     isMuted = true;
                 }
             }
         });
 
-        labelVolume.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+        VolumeBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 if (isMuted) {
-                    labelVolume.setGraphic(ivVolume);
+                    VolumeBtn.setGraphic(ivVolume);
                     sliderVolume.setValue(0.2);
                     isMuted = false;
                 } else {
-                    labelVolume.setGraphic(ivMute);
+                    VolumeBtn.setGraphic(ivMute);
                     sliderVolume.setValue(0);
                     isMuted = true;
                 }
             }
         });
-        labelVolume.setOnMouseEntered(new EventHandler<MouseEvent>() {
+        VolumeBtn.setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 if (hboxVolume.lookup("sliderVolume") == null) {
@@ -419,6 +451,7 @@ public class Videoplayer implements Initializable {
                 }
             }
         });
+
     }
 
     private void bindCurrentTimeLabel() {

@@ -2,11 +2,13 @@ package com.codegym.mediaplayer;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 
 import java.io.File;
@@ -20,10 +22,8 @@ public class ListMedia implements Initializable {
     @FXML
     private ListView<Media> idListView;
 
-
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
 
     }
     public void setModel(List<Media> mediaList) {
@@ -43,6 +43,21 @@ public class ListMedia implements Initializable {
                 } else {
                     File file = new File(item.getSource());
                     setText(URLDecoder.decode(file.getName(), StandardCharsets.UTF_8));
+                }
+            }
+        });
+        idListView.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+            @Override
+            public void handle(MouseEvent click) {
+
+                if (click.getClickCount() == 2) {
+                    //Use ListView's getSelected Item
+                    Media media = idListView.getSelectionModel()
+                            .getSelectedItem();
+
+                    System.out.println(media.getSource());
+                    //use this to do whatever you want to. Open Link etc.
                 }
             }
         });
